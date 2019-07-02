@@ -87,7 +87,7 @@ namespace IDXReader
             }
         }
 
-        // todo: increase performence. rewrite better
+        // todo: increase performence.
         public static IEnumerable<TElement> ReadFileND<TElement>(string filePath, bool isLittleEndian) where TElement : ICollection
         {
             using (BinaryReader reader = new BinaryReader(new FileStream(filePath, FileMode.Open)))
@@ -111,7 +111,7 @@ namespace IDXReader
                     for (int i = 0; i < fileProperties.DataLength; i++)
                     {
                         var element = Array.CreateInstance(fileProperties.DataType, fileProperties.ElementDims);
-                        
+
                         for (int j = 0; j < totalSize; j += dataSize)
                         {
                             for (int k = dataSize - 1; k >= 0; k--)
@@ -140,26 +140,6 @@ namespace IDXReader
             }
         }
 
-        private static Func<byte[], object> GetConverterFunc(Type destType)
-        {
-            switch (destType.Name)
-            {
-                case "Byte": return (bytes) => bytes[0];
-
-                case "SByte": return (bytes) => unchecked((sbyte)bytes[0]);
-
-                case "Int16": return (bytes) => BitConverter.ToInt16(bytes);
-
-                case "Int32": return (bytes) => BitConverter.ToInt32(bytes);
-
-                case "Single": return (bytes) => BitConverter.ToSingle(bytes);
-
-                case "Double": return (bytes) => BitConverter.ToDouble(bytes);
-
-                default: throw new Exception("Unsupported conversionType.");
-            }
-        }
-
         public static IEnumerable<TElement> ReadFile1D<TElement>(string filePath, bool isLittleEndian) where TElement : struct
         {
             using (BinaryReader reader = new BinaryReader(new FileStream(filePath, FileMode.Open)))
@@ -172,28 +152,31 @@ namespace IDXReader
                 if (fileProperties.ElementDims.Length != 0)
                     throw new Exception("File is ND, not 1D.");
 
-                var converter = GetConverterFunc(fileProperties.DataType);
                 var dataSize = Marshal.SizeOf(fileProperties.DataType);
 
                 if (BitConverter.IsLittleEndian != isLittleEndian)
                 {
                     for (int i = 0; i < fileProperties.DataLength; i++)
                     {
-                        byte[] element = new byte[dataSize];
-                        
+                        TElement[] element = new TElement[1];
+
                         for (int j = dataSize - 1; j >= 0; j--)
                         {
-                            element[j] = reader.ReadByte();
+                            Buffer.SetByte(element, j, reader.ReadByte());
                         }
-                        
-                       yield return (TElement)converter(element);
+
+                        yield return element[0];
                     }
                 }
                 else
                 {
                     for (int i = 0; i < fileProperties.DataLength; i++)
                     {
-                        yield return (TElement)converter(reader.ReadBytes(dataSize));
+                        TElement[] element = new TElement[1];
+
+                        Buffer.BlockCopy(reader.ReadBytes(dataSize), 0, element, 0, dataSize);                        
+
+                        yield return element[0];
                     }
                 }
             }
