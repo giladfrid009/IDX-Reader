@@ -1,9 +1,9 @@
 ﻿using System;
-using System.IO;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace IDXReader
 {
@@ -87,7 +87,6 @@ namespace IDXReader
             }
         }
 
-        // todo: increase performence.
         public static IEnumerable<TElement> ReadFileND<TElement>(string filePath, bool isLittleEndian) where TElement : ICollection
         {
             using (BinaryReader reader = new BinaryReader(new FileStream(filePath, FileMode.Open)))
@@ -111,15 +110,19 @@ namespace IDXReader
                     for (int i = 0; i < fileProperties.DataLength; i++)
                     {
                         var element = Array.CreateInstance(fileProperties.DataType, fileProperties.ElementDims);
+                        var handle = GCHandle.Alloc(element, GCHandleType.Pinned); 
+                        var ptr0 = Marshal.UnsafeAddrOfPinnedArrayElement(element, 0);
 
                         for (int j = 0; j < totalSize; j += dataSize)
                         {
                             for (int k = dataSize - 1; k >= 0; k--)
                             {
-                                Buffer.SetByte(element, j + k, reader.ReadByte());
+                                Marshal.WriteByte(ptr0, j + k, reader.ReadByte());
                             }
                         }
-                                                
+
+                        handle.Free();
+
                         yield return (TElement)(object)element;
                     }
                 }
@@ -128,11 +131,15 @@ namespace IDXReader
                     for (int i = 0; i < fileProperties.DataLength; i++)
                     {
                         var element = Array.CreateInstance(fileProperties.DataType, fileProperties.ElementDims);
+                        var handle = GCHandle.Alloc(element, GCHandleType.Pinned);
+                        var ptr0 = Marshal.UnsafeAddrOfPinnedArrayElement(element, 0);
 
                         for (int j = 0; j < totalSize; j++)
                         {
-                            Buffer.SetByte(element, j, reader.ReadByte());
+                            Marshal.WriteByte(ptr0, j, reader.ReadByte());
                         }
+
+                        handle.Free();
 
                         yield return (TElement)(object)element;
                     }
@@ -158,28 +165,40 @@ namespace IDXReader
                 {
                     for (int i = 0; i < fileProperties.DataLength; i++)
                     {
-                        TElement[] element = new TElement[1];
+                        TElement element = default;
+                        var handle = GCHandle.Alloc(element, GCHandleType.Pinned);
+                        var ptr0 = handle.AddrOfPinnedObject();
 
                         for (int j = dataSize - 1; j >= 0; j--)
                         {
-                            Buffer.SetByte(element, j, reader.ReadByte());
+                            Marshal.WriteByte(ptr0, j, reader.ReadByte());
                         }
 
-                        yield return element[0];
+                        handle.Free();
+
+                        yield return element;
                     }
                 }
                 else
                 {
                     for (int i = 0; i < fileProperties.DataLength; i++)
                     {
-                        TElement[] element = new TElement[1];
+                        TElement element = default;
+                        var handle = GCHandle.Alloc(element, GCHandleType.Pinned);
+                        var ptr0 = handle.AddrOfPinnedObject();
 
-                        Buffer.BlockCopy(reader.ReadBytes(dataSize), 0, element, 0, dataSize);                        
+                        for (int j = 0; j < dataSize; j++)
+                        {
+                            Marshal.WriteByte(ptr0, j, reader.ReadByte());
+                        }
 
-                        yield return element[0];
+                        handle.Free();
+
+                        yield return element;
                     }
                 }
             }
         }
+
     }
 }
