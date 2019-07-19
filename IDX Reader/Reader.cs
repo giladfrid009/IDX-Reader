@@ -121,7 +121,7 @@ namespace IDXReader
         /// <summary>
         /// Reads a dataset from an IDX file, when each element of the dataset is a collection (when the dataset is not 1D).
         /// </summary>
-        /// <typeparam name="TElement">Collection's element type (i.e: double[,] if the dataset has 3D data, with double data type). | Must be an array.</typeparam>
+        /// <typeparam name="TElement">Dataset's element type (i.e: double[,] if the dataset has 3D data, with double data type). Must be an array.</typeparam>
         /// <param name="filePath">Path to target file.</param>
         /// <param name="isLittleEndian">IDX file data structure.</param>
         public static IEnumerable<TElement> ReadND<TElement>(string filePath, bool isLittleEndian) where TElement : ICollection
@@ -187,7 +187,7 @@ namespace IDXReader
         /// <summary>
         /// Reads a dataset from an IDX file, when the dataset is 1D.
         /// </summary>
-        /// <typeparam name="TElement">Collection's element type (e.g double)</typeparam>
+        /// <typeparam name="TElement">Dataset's element type (e.g double)</typeparam>
         /// <param name="filePath">Path to target file.</param>
         /// <param name="isLittleEndian">IDX file data structure.</param>
         public static IEnumerable<TElement> Read1D<TElement>(string filePath, bool isLittleEndian) where TElement : struct
