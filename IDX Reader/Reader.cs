@@ -7,14 +7,29 @@ using System.Runtime.InteropServices;
 
 namespace IDXReader
 {
+    /// <summary>
+    /// Contains properties of an given IDX file.
+    /// </summary>
     public class IDXProperties
     {
-        public Type DataType { get; } // todo: not a clone! clone in constructor somehow
+        /// <summary>
+        /// Data type of the dataset.
+        /// </summary>
+        public Type DataType { get; }
 
+        /// <summary>
+        /// Dataset's element dimensions.
+        /// </summary>
         public int[] ElementDims { get; }
 
+        /// <summary>
+        /// Dataset's length.
+        /// </summary>
         public int DataLength { get; }
 
+        /// <param name="dataLength">Dataset's length.</param>
+        /// <param name="elementDims">Dataset's element dimensions.</param>
+        /// <param name="dataType">Data type of the dataset.</param>
         public IDXProperties(int dataLength, int[] elementDims, Type dataType)
         {
             DataLength = dataLength;
@@ -23,8 +38,14 @@ namespace IDXReader
         }
     }
 
+    /// <summary>
+    /// IDX reader class.
+    /// </summary>
     public static class Reader
     {
+        /// <summary>
+        /// Gets a type from a byte value encoding.
+        /// </summary>
         private static Type GetTypeFromVal(byte val)
         {
             switch (val)
@@ -40,6 +61,11 @@ namespace IDXReader
             }
         }
 
+        /// <summary>
+        /// Reads the properties of an IDX file.
+        /// </summary>
+        /// <param name="reader">BinaryReader to rarget file.</param>
+        /// <param name="isLittleEndian">IDX file data structure.</param>
         private static IDXProperties ReadProperties(BinaryReader reader, bool isLittleEndian)
         {
             bool reverse = isLittleEndian != BitConverter.IsLittleEndian;
@@ -79,6 +105,11 @@ namespace IDXReader
             return new IDXProperties(dataLength, elementDims, dataType);
         }
 
+        /// <summary>
+        /// Reads the properties of an IDX file.
+        /// </summary>
+        /// <param name="filePath">Path to target file.</param>
+        /// <param name="isLittleEndian">IDX file data structure.</param>
         public static IDXProperties ReadProperties(string filePath, bool isLittleEndian)
         {
             using (BinaryReader reader = new BinaryReader(new FileStream(filePath, FileMode.Open)))
@@ -87,7 +118,13 @@ namespace IDXReader
             }
         }
 
-        public static IEnumerable<TElement> ReadFileND<TElement>(string filePath, bool isLittleEndian) where TElement : ICollection
+        /// <summary>
+        /// Reads a dataset from an IDX file, when each element of the dataset is a collection (when the dataset is not 1D).
+        /// </summary>
+        /// <typeparam name="TElement">Collection's element type (i.e: double[,] if the dataset has 3D data, with double data type). | Must be an array.</typeparam>
+        /// <param name="filePath">Path to target file.</param>
+        /// <param name="isLittleEndian">IDX file data structure.</param>
+        public static IEnumerable<TElement> ReadND<TElement>(string filePath, bool isLittleEndian) where TElement : ICollection
         {
             using (BinaryReader reader = new BinaryReader(new FileStream(filePath, FileMode.Open)))
             {
@@ -147,7 +184,13 @@ namespace IDXReader
             }
         }
 
-        public static IEnumerable<TElement> ReadFile1D<TElement>(string filePath, bool isLittleEndian) where TElement : struct
+        /// <summary>
+        /// Reads a dataset from an IDX file, when the dataset is 1D.
+        /// </summary>
+        /// <typeparam name="TElement">Collection's element type (e.g double)</typeparam>
+        /// <param name="filePath">Path to target file.</param>
+        /// <param name="isLittleEndian">IDX file data structure.</param>
+        public static IEnumerable<TElement> Read1D<TElement>(string filePath, bool isLittleEndian) where TElement : struct
         {
             using (BinaryReader reader = new BinaryReader(new FileStream(filePath, FileMode.Open)))
             {
@@ -199,6 +242,5 @@ namespace IDXReader
                 }
             }
         }
-
     }
 }
